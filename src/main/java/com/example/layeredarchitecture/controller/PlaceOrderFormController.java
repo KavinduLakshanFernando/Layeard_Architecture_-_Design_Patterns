@@ -2,6 +2,8 @@ package com.example.layeredarchitecture.controller;
 
 import com.example.layeredarchitecture.bo.custom.PurchaseOrderBO;
 import com.example.layeredarchitecture.bo.custom.impl.PurchaseOrderBOImpl;
+import com.example.layeredarchitecture.dao.BOFactory;
+import com.example.layeredarchitecture.dao.DAOFactory;
 import com.example.layeredarchitecture.model.CustomerDTO;
 import com.example.layeredarchitecture.model.ItemDTO;
 import com.example.layeredarchitecture.model.OrderDetailDTO;
@@ -55,8 +57,9 @@ public class PlaceOrderFormController {
     public Label lblTotal;
     private String orderId;
 
-    PurchaseOrderBO purchaseOrderBO = new PurchaseOrderBOImpl();
-
+   // PurchaseOrderBO purchaseOrderBO = new PurchaseOrderBOImpl();
+   // PurchaseOrderBO purchaseOrderBO = (PurchaseOrderBO) DAOFactory.getDaoFactory().getDAO(DAOFactory.DAOTypes.ORDER);
+    PurchaseOrderBO purchaseOrderBO = (PurchaseOrderBO) BOFactory.getBoFactory().getBO(BOFactory.BOTypes.ORDER_DETAIL);
     public void initialize() throws SQLException, ClassNotFoundException {
         tblOrderDetails.getColumns().get(0).setCellValueFactory(new PropertyValueFactory<>("code"));
         tblOrderDetails.getColumns().get(1).setCellValueFactory(new PropertyValueFactory<>("description"));

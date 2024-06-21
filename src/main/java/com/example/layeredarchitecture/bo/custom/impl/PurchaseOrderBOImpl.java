@@ -2,6 +2,7 @@ package com.example.layeredarchitecture.bo.custom.impl;
 
 
 import com.example.layeredarchitecture.bo.custom.PurchaseOrderBO;
+import com.example.layeredarchitecture.dao.DAOFactory;
 import com.example.layeredarchitecture.dao.custom.CustomerDAO;
 import com.example.layeredarchitecture.dao.custom.ItemDAO;
 import com.example.layeredarchitecture.dao.custom.OrderDAO;
@@ -10,6 +11,10 @@ import com.example.layeredarchitecture.dao.custom.impl.CustomerDAOImpl;
 import com.example.layeredarchitecture.dao.custom.impl.ItemDAOImpl;
 import com.example.layeredarchitecture.dao.custom.impl.OrderDAOImpl;
 import com.example.layeredarchitecture.dao.custom.impl.OrderDetailsDAOImpl;
+import com.example.layeredarchitecture.dao.entity.Customer;
+import com.example.layeredarchitecture.dao.entity.Item;
+import com.example.layeredarchitecture.dao.entity.Order;
+import com.example.layeredarchitecture.dao.entity.OrderDetail;
 import com.example.layeredarchitecture.db.DBConnection;
 import com.example.layeredarchitecture.model.CustomerDTO;
 import com.example.layeredarchitecture.model.ItemDTO;
@@ -24,47 +29,75 @@ import java.util.List;
 
 public class PurchaseOrderBOImpl implements PurchaseOrderBO {
 
+   // CustomerDAO customerDAO = new CustomerDAOImpl();
+    CustomerDAO customerDAO = (CustomerDAO) DAOFactory.getDaoFactory().getDAO(DAOFactory.DAOTypes.CUSTOMER);
+    // ItemDAO itemDAO = new ItemDAOImpl();
+    ItemDAO itemDAO = (ItemDAO) DAOFactory.getDaoFactory().getDAO(DAOFactory.DAOTypes.ITEM);
+  //  OrderDAO orderDAO = new OrderDAOImpl();
+    OrderDAO orderDAO = (OrderDAO) DAOFactory.getDaoFactory().getDAO(DAOFactory.DAOTypes.ORDER);
+  //  OrderDetailsDAO orderDetailsDAO = new OrderDetailsDAOImpl();
+    OrderDetailsDAO orderDetailsDAO = (OrderDetailsDAO) DAOFactory.getDaoFactory().getDAO(DAOFactory.DAOTypes.ORDER_DETAIL);
+
+
     @Override
     public CustomerDTO searchCustomer(String id) throws SQLException, ClassNotFoundException {
-        CustomerDAO customerDAO = new CustomerDAOImpl();
-        return customerDAO.search(id);
+      //  CustomerDAO customerDAO = new CustomerDAOImpl();
+        Customer customer = customerDAO.search(id);
+        return new CustomerDTO(customer.getId(), customer.getName(), customer.getAddress());
     }
 
 
     @Override
     public ItemDTO searchItem(String code) throws SQLException, ClassNotFoundException {
-        ItemDAO itemDAO = new ItemDAOImpl();
-        return itemDAO.search(code);
+      //  ItemDAO itemDAO = new ItemDAOImpl();
+        Item item = itemDAO.search(code);
+        return new ItemDTO(item.getCode(),item.getDescription(),item.getUnitPrice(), item.getQtyOnHand());
+
     }
 
     @Override
     public boolean existItem(String code) throws SQLException, ClassNotFoundException {
-        ItemDAO itemDAO = new ItemDAOImpl();
+      //  ItemDAO itemDAO = new ItemDAOImpl();
         return itemDAO.exist(code);
     }
 
     @Override
     public boolean existCustomer(String id) throws SQLException, ClassNotFoundException {
-        CustomerDAO customerDAO = new CustomerDAOImpl();
+       // CustomerDAO customerDAO = new CustomerDAOImpl();
         return customerDAO.exist(id);
     }
 
     @Override
     public String generateOrderID() throws SQLException, ClassNotFoundException {
-        OrderDAO orderDAO = new OrderDAOImpl();
+      //  OrderDAO orderDAO = new OrderDAOImpl();
         return orderDAO.generateNewID();
     }
 
     @Override
     public ArrayList<CustomerDTO> getAllCustomers() throws SQLException, ClassNotFoundException {
-        CustomerDAO customerDAO = new CustomerDAOImpl();
-       return customerDAO.getAll();
+      //  CustomerDAO customerDAO = new CustomerDAOImpl();
+        ArrayList<Customer>customers = customerDAO.getAll();
+        ArrayList<CustomerDTO>customerDTOS = new ArrayList<>();
+
+        for (Customer c : customers){
+            CustomerDTO customerDTO = new CustomerDTO(c.getId(),c.getName(),c.getAddress());
+            customerDTOS.add(customerDTO);
+        }
+        return customerDTOS;
     }
 
     @Override
     public ArrayList<ItemDTO> getAllItems() throws SQLException, ClassNotFoundException {
-        ItemDAO itemDAO = new ItemDAOImpl();
-        return itemDAO.getAll();
+      //  ItemDAO itemDAO = new ItemDAOImpl();
+
+        ArrayList<Item>items = itemDAO.getAll();
+        ArrayList<ItemDTO>itemDTOS = new ArrayList<>();
+
+        for (Item i : items) {
+            ItemDTO itemDTO = new ItemDTO(i.getCode(),i.getDescription(),i.getUnitPrice(),i.getQtyOnHand());
+            itemDTOS.add(itemDTO);
+        }
+        return itemDTOS;
     }
 
 
@@ -75,7 +108,7 @@ public class PurchaseOrderBOImpl implements PurchaseOrderBO {
         try {
             connection = DBConnection.getDbConnection().getConnection();
             //Check order id already exist or not
-            OrderDAO orderDAO = new OrderDAOImpl();
+           // OrderDAO orderDAO = new OrderDAOImpl();
             boolean b1 = orderDAO.exist(orderId);
             /*if order id already exist*/
             if (b1) {
@@ -84,7 +117,7 @@ public class PurchaseOrderBOImpl implements PurchaseOrderBO {
 
             connection.setAutoCommit(false);
             //Save the Order to the order table
-            boolean b2 = orderDAO.add(new OrderDTO(orderId, orderDate, customerId));
+            boolean b2 = orderDAO.add(new Order(orderId, orderDate, customerId));
 
             if (!b2) {
                 connection.rollback();
@@ -95,7 +128,7 @@ public class PurchaseOrderBOImpl implements PurchaseOrderBO {
             // add data to the Order Details table
             OrderDetailsDAO orderDetailsDAO = new OrderDetailsDAOImpl();
             for (OrderDetailDTO detail : orderDetails) {
-                boolean b3 = orderDetailsDAO.add(detail);
+                boolean b3 = orderDetailsDAO.add(new OrderDetail(detail.getOid(),detail.getItemCode(),detail.getQty(),detail.getUnitPrice()));
                 if (!b3) {
                     connection.rollback();
                     connection.setAutoCommit(true);
@@ -106,8 +139,8 @@ public class PurchaseOrderBOImpl implements PurchaseOrderBO {
                 item.setQtyOnHand(item.getQtyOnHand() - detail.getQty());
 
                 //update item
-                ItemDAO itemDAO = new ItemDAOImpl();
-                boolean b = itemDAO.update(new ItemDTO(item.getCode(), item.getDescription(), item.getUnitPrice(), item.getQtyOnHand()));
+               // ItemDAO itemDAO = new ItemDAOImpl();
+                boolean b = itemDAO.update(new Item(item.getCode(), item.getDescription(), item.getUnitPrice(), item.getQtyOnHand()));
 
                 if (!b) {
                     connection.rollback();
